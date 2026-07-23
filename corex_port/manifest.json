@@ -40,9 +40,11 @@
     "fork_url": "https://github.com/tlmn2008/LichtFeld-Studio",
     "branch": "corex-port",
     "default_branch": "corex-port",
-    "default_branch_status": "not_attempted",
+    "default_branch_status": "success",
     "compare_url": "https://github.com/tlmn2008/LichtFeld-Studio/compare/master...corex-port",
-    "push_status": "pending"
+    "push_commit": "c52b74a912ed35533e453f248e8935c3c475ef04",
+    "push_status": "success",
+    "pushed_at": "2026-07-23T19:32:00Z"
   },
 
   "local_logs": {
