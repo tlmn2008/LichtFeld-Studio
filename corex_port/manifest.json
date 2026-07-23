@@ -1,0 +1,52 @@
+{
+  "repo_name": "LichtFeld-Studio",
+  "repo_url": "https://github.com/MrNeRF/LichtFeld-Studio",
+  "source_commit": "7efd48d58771c26456465bf35da7200754b739f5",
+  "source_commit_date": "2026-07-23T10:21:07Z",
+  "source_branch": "master",
+  "migration_started_at": "2026-07-23T18:54:00Z",
+  "migration_finished_at": "2026-07-23T19:30:00Z",
+  "sdk_version": "/usr/local/corex (CoreX 4.5.0, ivcore11, clang 22.1.0git)",
+  "skill_version": "corex-CUDA-compatible-migration@1.0",
+
+  "compile_status": "success",
+  "test_status": "all_pass",
+  "overall_status": "partial",
+  "tests_run": 16,
+  "tests_passed": 16,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+
+  "summary": "LichtFeld-Studio 是 LibTorch-free 的 3DGS 训练/可视化工作站（C++23 + CUDA + Vulkan GUI，vcpkg 构建）。本次将其自带的 LibTorch-free CUDA 张量核库 lfs_tensor_kernels（10 个 .cu）迁移到 CoreX ivcore11：nvcc 改用 clang++ -x ivcore、arch 改为 ivcore11、翻译编译 flag，并逐个复现并修复 ivcore11 编译墙。10/10 张量核在 ivcore11 编译成功；自包含 on-GPU 冒烟直接调用迁移后的设备代码在 GPU 0（Iluvatar BI-V150，warpSize=64）上运行，6/6 数值校验通过。完整 GUI 应用与仓库自带 gtest/ctest 正式测试集需要完整 vcpkg 依赖图与 host lfs_core 基础设施、且 GUI 依赖 Vulkan interop 无法 headless 运行，属超范围（非 ivcore11 terminal 墙），已在 session_notes 中诚实说明，故整体判为 partial。",
+  "key_adaptations": [
+    "packed128.cuh：__ldcs/__stcs/__stcg 流式访存内联 PTX（'l' 约束）在 ivcore11 llc 崩溃，__ILUVATAR__ 分支回退为普通 128-bit load/store（语义等价）",
+    "tensor_ops.cu：ixthrust 无 par_nosync（版本滞后），别名到同步 par",
+    "tensor_broadcast_ops.cu：broadcast_index_functor 改为 __host__ __device__，修复 clang-cuda 在 host pass 对 __device__-only 仿函数的 invoke_result 推导失败",
+    "tensor_ops.cu：__half 与整型 static_cast 二义，经 float 中转消歧",
+    "tensor_ops.cu：CoreX cub DeviceSegmentedReduce::Reduce 对 begin/end 用同一 OffsetIteratorT，改用单一 offset 迭代器（offsets / offsets+1）",
+    "编译 flag 翻译：-use_fast_math→-ffast-math，去掉 --extended-lambda / --expt-relaxed-constexpr，sm_XX→ivcore11",
+    "验证 warpSize=64 下 warp/block 归约数值正确（32/64/256 线程用例）"
+  ],
+  "workaround_blockers": [
+    "NV PTX 'l' 约束（__ldcs/__stcs/__stcg）→ 普通 128-bit 访存回退，已解决",
+    "ixthrust 缺 par_nosync → 别名 par，已解决",
+    "__device__-only 仿函数 invoke_result 推导失败 → __host__ __device__，已解决",
+    "__half↔整型 static_cast 二义 → 经 float 中转，已解决",
+    "cub DeviceSegmentedReduce offset 迭代器类型差异 → 单一 offset 迭代器，已解决",
+    "完整 vcpkg 应用与正式 gtest/ctest 测试集需完整依赖图与 host lfs_core 基础设施、GUI 需 Vulkan 无法 headless → 超本节点范围（非 terminal），本次限定为 CUDA 张量核范围并以 on-GPU 冒烟验证"
+  ],
+
+  "github": {
+    "fork_url": "https://github.com/tlmn2008/LichtFeld-Studio",
+    "branch": "corex-port",
+    "default_branch": "corex-port",
+    "default_branch_status": "not_attempted",
+    "compare_url": "https://github.com/tlmn2008/LichtFeld-Studio/compare/master...corex-port",
+    "push_status": "pending"
+  },
+
+  "local_logs": {
+    "compile_log": "/home/repos/LichtFeld-Studio/corex_port/build/compile.log",
+    "test_log": "/home/repos/LichtFeld-Studio/corex_port/test/test.log"
+  }
+}

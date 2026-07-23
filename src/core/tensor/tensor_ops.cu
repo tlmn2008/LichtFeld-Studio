@@ -36,6 +36,19 @@
 #include <thrust/transform.h>
 #include <thrust/tuple.h>
 
+#if defined(__ILUVATAR__)
+// CoreX/ivcore11: ixthrust is version-lagged and does not ship
+// thrust::cuda::par_nosync (a newer-thrust async policy; older NV thrust lacks it
+// too). par_nosync only drops the per-call implicit stream sync as a performance
+// optimization, so aliasing it to the synchronous thrust::cuda::par is
+// semantically safe (just adds a sync). Guarded so NVIDIA builds are untouched.
+namespace thrust {
+    namespace cuda {
+        static const auto par_nosync = par;
+    }
+} // namespace thrust
+#endif
+
 namespace lfs::core::tensor_ops {
 
     namespace {
@@ -334,7 +347,16 @@ namespace lfs::core::tensor_ops {
     template <typename SrcT, typename DstT>
     struct ConvertFunctor {
         __device__ DstT operator()(SrcT x) const {
-            return static_cast<DstT>(x);
+            // CoreX/ivcore11: __half only has float/double (de)conversions, so a
+            // direct static_cast between __half and an integral type is ambiguous
+            // ("ambiguous conversion for static_cast from 'long' to '__half'").
+            // Route half<->integral through float to disambiguate (NV-safe).
+            if constexpr ((std::is_same_v<SrcT, __half> && std::is_integral_v<DstT>) ||
+                          (std::is_integral_v<SrcT> && std::is_same_v<DstT, __half>)) {
+                return static_cast<DstT>(static_cast<float>(x));
+            } else {
+                return static_cast<DstT>(x);
+            }
         }
     };
 
@@ -410,16 +432,15 @@ namespace lfs::core::tensor_ops {
 
         // OPTIMIZED PATH: Contiguous segments - use CUB's segmented reduce
         if (inner_size == 1) {
-            // begin_offsets: [0, N, 2N, 3N, ...]
-            auto begin_offsets = thrust::make_transform_iterator(
+            // CoreX/ivcore11: the shipped cub DeviceSegmentedReduce::Reduce takes a
+            // single OffsetIteratorT for BOTH begin and end offsets (newer NV CUB has
+            // separate Begin/End offset template params). Passing two distinct
+            // transform_iterator types (two separate lambdas) made OffsetIteratorT
+            // undeducible -> "no matching function for call to 'Reduce'". Use one
+            // offset iterator type and derive end from begin+1 (canonical cub idiom,
+            // also valid on NVIDIA): offsets[i]=i*N, so begin=offsets, end=offsets+1.
+            auto offsets = thrust::make_transform_iterator(
                 thrust::counting_iterator<int>(0),
-                [reduce_size] __host__ __device__(int i) -> int {
-                    return i * static_cast<int>(reduce_size);
-                });
-
-            // end_offsets: [N, 2N, 3N, 4N, ...]
-            auto end_offsets = thrust::make_transform_iterator(
-                thrust::counting_iterator<int>(1),
                 [reduce_size] __host__ __device__(int i) -> int {
                     return i * static_cast<int>(reduce_size);
                 });
@@ -433,8 +454,8 @@ namespace lfs::core::tensor_ops {
                         input,
                         output,
                         static_cast<int>(outer_size),
-                        begin_offsets,
-                        end_offsets,
+                        offsets,
+                        offsets + 1,
                         op,
                         init_value,
                         stream);

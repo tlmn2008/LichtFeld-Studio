@@ -1,0 +1,4 @@
+ src/core/tensor/internal/packed128.cuh  | 21 +++++++++++++++
+ src/core/tensor/tensor_broadcast_ops.cu |  7 ++++-
+ src/core/tensor/tensor_ops.cu           | 45 ++++++++++++++++++++++++---------
+ 3 files changed, 60 insertions(+), 13 deletions(-)

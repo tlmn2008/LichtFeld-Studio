@@ -1,0 +1,64 @@
+############################################################
+# LichtFeld-Studio CoreX (ivcore11) migration - test.log
+# Date: 2026-07-23T11:25:46Z
+# Scope: LibTorch-free CUDA tensor-kernel library (lfs_tensor_kernels)
+#        compiled with clang++ -x ivcore (arch ivcore11) + on-GPU smoke.
+############################################################
+
+== ixsmi (GPU 0 assigned) ==
+Timestamp    Thu Jul 23 19:01:30 2026
++--------------------------------------------------------------------------------+
+|  IX-ML: 4.4.0            Driver Version: 4.5.0          CUDA Version: 10.2     |
+|----------------------------------+----------------------+----------------------|
+| GPU  Name                        | Bus-Id               | Clock-SM  Clock-Mem  |
+| Fan  Temp  Perf    Pwr:Usage/Cap |      Memory-Usage    | GPU-Util  Compute M. |
+|==================================+======================+======================|
+| 0    Iluvatar BI-V150            | 00000000:29:00.0     | 500MHz    1600MHz    |
+| N/A  28C   P0       N/A / N/A    | 68MiB / 32768MiB     | 0%        Default    |
++----------------------------------+----------------------+----------------------+
+| 1    Iluvatar BI-V150            | 00000000:2C:00.0     | 500MHz    1600MHz    |
+| N/A  26C   P0       53W / 350W   | 68MiB / 32768MiB     | 0%        Default    |
+
+== clang version ==
+clang version 22.1.0git (4.5.0.20260630 a526c4d94919b0feb06f49a88a749e075a7f5cf3)
+Target: x86_64-unknown-linux-gnu
+
+==================== KERNEL COMPILE RESULTS (clang++ -x ivcore --cuda-gpu-arch=ivcore11) ====================
+RESULT: OK src/core/tensor/tensor_ops.cu
+RESULT: OK src/core/tensor/tensor_warp_reduce.cu
+RESULT: OK src/core/tensor/tensor_matrix_ops.cu
+RESULT: OK src/core/tensor/tensor_broadcast_ops.cu
+RESULT: OK src/core/tensor/tensor_masking_ops.cu
+RESULT: OK src/core/tensor/tensor_random_ops.cu
+RESULT: OK src/core/tensor/tensor_strided_ops.cu
+RESULT: OK src/core/tensor/tensor_dot_optimized.cu
+RESULT: OK src/core/tensor/tensor_nn_ops.cu
+RESULT: OK src/core/tensor/tensor_fused_pointwise.cu
+SUMMARY: ok=10 fail=0
+
+Object files produced:
+1525120 corex_port/build/obj/src_core_tensor_tensor_broadcast_ops.cu.o
+122112 corex_port/build/obj/src_core_tensor_tensor_dot_optimized.cu.o
+1649696 corex_port/build/obj/src_core_tensor_tensor_fused_pointwise.cu.o
+1241072 corex_port/build/obj/src_core_tensor_tensor_masking_ops.cu.o
+68072 corex_port/build/obj/src_core_tensor_tensor_matrix_ops.cu.o
+33504 corex_port/build/obj/src_core_tensor_tensor_nn_ops.cu.o
+6420288 corex_port/build/obj/src_core_tensor_tensor_ops.cu.o
+1021104 corex_port/build/obj/src_core_tensor_tensor_random_ops.cu.o
+1967856 corex_port/build/obj/src_core_tensor_tensor_strided_ops.cu.o
+1797000 corex_port/build/obj/src_core_tensor_tensor_warp_reduce.cu.o
+
+==================== ON-GPU SMOKE TEST (GPU 0, real device execution) ====================
+=== LichtFeld-Studio CoreX device-kernel smoke test ===
+Device 0: Iluvatar BI-V150  warpSize=64  SMs=16
+
+[ PASS ] warp_reduce_sum (32 lanes)                     got=744.0000 want=744.0000
+[ PASS ] block_reduce_sum (256 threads)                 got=190.5000 want=190.5000
+[ PASS ] block_reduce_sum (64 threads)                  got=64.0000 want=64.0000
+[ PASS ] packed128 load128cs+store128 (ldcs fix)        got=6.0000 want=6.0000
+[ PASS ] block_reduce_max (functor)                     got=99.9912 want=99.9912
+[ PASS ] broadcast index mapping [1,4]->[3,4]           got=0.0000 want=0.0000
+
+cudaGetLastError: no error
+SMOKE RESULT: passed=6 failed=0 total=6
+SMOKE_EXIT=0

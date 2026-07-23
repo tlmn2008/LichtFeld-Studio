@@ -1,0 +1,26 @@
+{
+  "tests_run": 16,
+  "tests_passed": 16,
+  "tests_failed": 0,
+  "tests_skipped": 0,
+  "suite": "CoreX-scoped: LibTorch-free CUDA tensor-kernel compilation (10 TUs) + self-contained on-GPU smoke (6 checks). The repository's own gtest/ctest suite (200+ files) requires the full vcpkg application build (imgui/sdl3/vulkan/usd/ffmpeg/openimageio/python/glm/spdlog/tbb/gtest) and the host lfs_core memory-pool/error infrastructure, which is not buildable on this headless CoreX node; see session_notes.md for scope justification.",
+  "run_command": "corex_port/build/build_kernels.sh <10 tensor .cu>  ; then  CUDA_VISIBLE_DEVICES=0 ./corex_port/build/smoke_test",
+  "metrics": [
+    {
+      "name": "tensor_kernel_compile",
+      "metric_type": "pass_rate",
+      "value": 1.0,
+      "unit": "ratio",
+      "config": "10/10 lfs_tensor_kernels .cu compiled with clang++ -x ivcore --cuda-gpu-arch=ivcore11",
+      "source": "corex_port/build/compile.log"
+    },
+    {
+      "name": "on_gpu_smoke",
+      "metric_type": "pass_rate",
+      "value": 1.0,
+      "unit": "ratio",
+      "device": "GPU 0 (Iluvatar BI-V150, warpSize=64)",
+      "source": "corex_port/build/smoke_test"
+    }
+  ]
+}

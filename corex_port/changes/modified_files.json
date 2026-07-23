@@ -1,0 +1,19 @@
+{
+  "files": [
+    {
+      "path": "src/core/tensor/internal/packed128.cuh",
+      "action": "edit",
+      "reason": "load128cs/store128cs/store128cg use __ldcs/__stcs/__stcg streaming-cache intrinsics that lower to NV PTX inline asm with the 64-bit 'l' address constraint; the ivcore11 llc backend cannot select it ('unknown asm constraint l'). Added __ILUVATAR__-guarded fallback to plain 128-bit load/store (semantically identical, drops only the cache hint)."
+    },
+    {
+      "path": "src/core/tensor/tensor_broadcast_ops.cu",
+      "action": "edit",
+      "reason": "broadcast_index_functor::operator() was __device__-only; thrust::make_transform_iterator deduces its value type via std::invoke_result in the host pass, which clang-cuda cannot evaluate for a device-only functor. Marked it __host__ __device__ (integer-only body, host-safe)."
+    },
+    {
+      "path": "src/core/tensor/tensor_ops.cu",
+      "action": "edit",
+      "reason": "Three CoreX fixes: (1) __ILUVATAR__-guarded alias thrust::cuda::par_nosync -> par (ixthrust version lag, no par_nosync); (2) ConvertFunctor routes __half<->integral casts through float to resolve ambiguous conversion on ivcore11 (__half has only float/double conversions); (3) cub::DeviceSegmentedReduce::Reduce called with a single offset-iterator type (offsets / offsets+1) because CoreX's cub uses one OffsetIteratorT for both begin/end (newer NV CUB has separate types), previously passed two distinct transform_iterator lambdas."
+    }
+  ]
+}

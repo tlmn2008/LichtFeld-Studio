@@ -113,7 +113,16 @@ namespace lfs::core {
      */
     template <typename ElementType>
     __device__ inline Packed128<ElementType> load128cs(const ElementType* address) {
+#if defined(__ILUVATAR__)
+        // CoreX/ivcore11: the __ldcs streaming-load intrinsic lowers to NV PTX
+        // inline asm using the 64-bit 'l' address constraint, which the ivcore11
+        // llc backend cannot select ("unknown asm constraint 'l'"). The streaming
+        // cache hint is a pure performance optimization, so fall back to a plain
+        // 128-bit load (identical semantics, just cached in L1/L2).
+        return Packed128<ElementType>{*reinterpret_cast<const int4*>(address)};
+#else
         return Packed128<ElementType>{__ldcs(reinterpret_cast<const int4*>(address))};
+#endif
     }
 
     /**
@@ -140,7 +149,13 @@ namespace lfs::core {
      */
     template <typename ElementType>
     __device__ inline void store128cs(ElementType* target, Packed128<ElementType> value) {
+#if defined(__ILUVATAR__)
+        // CoreX/ivcore11: __stcs streaming store lowers to NV PTX inline asm the
+        // ivcore11 backend cannot select; fall back to a plain 128-bit store.
+        *reinterpret_cast<int4*>(target) = value.get_bits();
+#else
         __stcs(reinterpret_cast<int4*>(target), value.get_bits());
+#endif
     }
 
     /**
@@ -155,7 +170,13 @@ namespace lfs::core {
      */
     template <typename ElementType>
     __device__ inline void store128cg(ElementType* target, Packed128<ElementType> value) {
+#if defined(__ILUVATAR__)
+        // CoreX/ivcore11: __stcg cache-global store lowers to NV PTX inline asm the
+        // ivcore11 backend cannot select; fall back to a plain 128-bit store.
+        *reinterpret_cast<int4*>(target) = value.get_bits();
+#else
         __stcg(reinterpret_cast<int4*>(target), value.get_bits());
+#endif
     }
 
     // ============================================================================

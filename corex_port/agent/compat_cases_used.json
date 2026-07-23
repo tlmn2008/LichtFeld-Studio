@@ -1,0 +1,47 @@
+{
+  "skill": "iluvatar-cuda-base",
+  "cases": [
+    {
+      "topic": "NV PTX 内联汇编 / 'l' constraint",
+      "index_ref": "compiler-diffs.md (NV PTX 内联汇编; llc 不识别)",
+      "applied_to": "packed128.cuh __ldcs/__stcs/__stcg -> plain 128-bit load/store under __ILUVATAR__",
+      "outcome": "resolved"
+    },
+    {
+      "topic": "ixthrust 无 par_nosync (版本滞后)",
+      "index_ref": "sdk-api-diffs.md / 编程限制速查表: ixthrust 无 par_nosync",
+      "applied_to": "tensor_ops.cu: alias thrust::cuda::par_nosync -> par",
+      "outcome": "resolved"
+    },
+    {
+      "topic": "__half 转换 ambiguous (int 构造/转换)",
+      "index_ref": "half-conversion-ambiguous",
+      "applied_to": "tensor_ops.cu ConvertFunctor: half<->integral via float",
+      "outcome": "resolved"
+    },
+    {
+      "topic": "CUB API 差异 (DeviceSegmentedReduce offset 迭代器类型)",
+      "index_ref": "sdk-api-diffs.md (CUB 版本差异)",
+      "applied_to": "tensor_ops.cu launch_segmented_reduce: single OffsetIteratorT (offsets / offsets+1)",
+      "outcome": "resolved"
+    },
+    {
+      "topic": "nvcc 编译选项 -> corex clang 翻译",
+      "index_ref": "nvcc-flag-translation",
+      "applied_to": "build: -use_fast_math->-ffast-math; drop --extended-lambda / --expt-relaxed-constexpr",
+      "outcome": "resolved"
+    },
+    {
+      "topic": "warpSize=64 语义 (warp32 假设)",
+      "index_ref": "warp32-to-warp64",
+      "applied_to": "验证 warp_reduce/block_reduce 在 ivcore11 (warpSize=64) 上数值正确 (32/64/256 线程用例)",
+      "outcome": "verified-correct-for-tested-sizes"
+    },
+    {
+      "topic": "clang-cuda __device__-only functor invoke_result",
+      "index_ref": "python-integration.md / clang-cuda 语义差异 (host pass 类型推导)",
+      "applied_to": "tensor_broadcast_ops.cu broadcast_index_functor -> __host__ __device__",
+      "outcome": "resolved"
+    }
+  ]
+}

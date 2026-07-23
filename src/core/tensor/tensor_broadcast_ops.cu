@@ -224,7 +224,12 @@ namespace lfs::core::tensor_ops {
             }
         }
 
-        __device__ size_t operator()(size_t dst_linear_idx) const {
+        // CoreX/ivcore11: thrust::make_transform_iterator deduces its value type
+        // via std::invoke_result in the host compilation pass; clang-cuda cannot
+        // evaluate that for a __device__-only operator() ("no type named 'type' in
+        // invoke_result"). Marking it __host__ __device__ (body is plain integer
+        // arithmetic, host-safe) lets the return type be deduced on both passes.
+        __host__ __device__ size_t operator()(size_t dst_linear_idx) const {
             size_t src_idx = 0;
             size_t remaining = dst_linear_idx;
 

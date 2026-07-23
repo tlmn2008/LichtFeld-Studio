@@ -1,0 +1,20 @@
+# CoreX ivcore11 build of LichtFeld-Studio LibTorch-free CUDA tensor kernels.
+# Full driver script: corex_port/build/build_kernels.sh
+#
+# Per-TU compile command (nvcc -> clang++, arch -> ivcore11, nvcc-only flags dropped):
+clang++ -x ivcore --cuda-path=/usr/local/corex --cuda-gpu-arch=ivcore11 \
+  -std=c++20 -O3 -ffast-math -DLFS_CORE_EXPORTS -DNDEBUG \
+  -I src/core/include -I src/core/tensor -I src/diagnostics/include -I src \
+  -I external -I /usr/local/corex/include \
+  -c <tensor_kernel>.cu -o <obj>.o
+#
+# Sources (lfs_tensor_kernels target, src/core/tensor/CMakeLists.txt):
+#   tensor_ops.cu tensor_warp_reduce.cu tensor_matrix_ops.cu tensor_broadcast_ops.cu
+#   tensor_masking_ops.cu tensor_random_ops.cu tensor_strided_ops.cu
+#   tensor_dot_optimized.cu tensor_nn_ops.cu tensor_fused_pointwise.cu
+#
+# Flag translation vs upstream CMake (Linux/Release CUDA flags
+# "-O3 -use_fast_math --extended-lambda --expt-relaxed-constexpr"):
+#   -use_fast_math          -> -ffast-math
+#   --extended-lambda       -> dropped (clang-cuda supports extended lambdas natively)
+#   --expt-relaxed-constexpr-> dropped (clang-cuda relaxed constexpr is default)

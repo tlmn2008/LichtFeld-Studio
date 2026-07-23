@@ -1,0 +1,7 @@
+# On-GPU smoke test (self-contained; includes the migrated device headers and
+# launches kernels on GPU 0, links cudart only).
+clang++ -x ivcore --cuda-path=/usr/local/corex --cuda-gpu-arch=ivcore11 -std=c++20 -O2 \
+  corex_port/test/smoke.cu -o corex_port/build/smoke_test \
+  -I src/core/include -I src/core/tensor -I src/diagnostics/include -I src \
+  -I external -I /usr/local/corex/include -L/usr/local/corex/lib -lcudart
+CUDA_VISIBLE_DEVICES=0 ./corex_port/build/smoke_test

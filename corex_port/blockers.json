@@ -1,0 +1,77 @@
+{
+  "blockers": [
+    {
+      "id": 1,
+      "category": "workaround-able",
+      "symptom": "NV PTX inline asm with 64-bit 'l' constraint from __ldcs/__stcs/__stcg (packed128 streaming loads/stores) -> ivcore11 llc: 'unknown asm constraint l', llc command failed",
+      "file": "src/core/tensor/internal/packed128.cuh",
+      "error_snippet": "error: unknown asm constraint 'l' ... clang++: error: llc command failed with exit code 1",
+      "attempts": [
+        {"action": "compile representative kernel (tensor_warp_reduce.cu) with clang++ -x ivcore, also tried -O0", "result": "reproduced at all opt levels; isolated source to __ldcs int4 in load128cs"},
+        {"action": "guard load128cs/store128cs/store128cg with __ILUVATAR__ and fall back to plain 128-bit load/store", "result": "resolved; kernel compiles and load128cs validated on GPU"}
+      ],
+      "final_verdict": "streaming cache hint is a pure perf optimization; plain load/store is semantically equivalent. Fixed.",
+      "resolved": true
+    },
+    {
+      "id": 2,
+      "category": "workaround-able",
+      "symptom": "thrust::cuda::par_nosync not provided by ixthrust (version lag)",
+      "file": "src/core/tensor/tensor_ops.cu",
+      "error_snippet": "error: no member named 'par_nosync' in namespace 'thrust::cuda'",
+      "attempts": [
+        {"action": "add __ILUVATAR__-guarded alias 'static const auto par_nosync = par;' in namespace thrust::cuda", "result": "resolved"}
+      ],
+      "final_verdict": "par_nosync only drops an implicit per-call stream sync; aliasing to synchronous par is correct.",
+      "resolved": true
+    },
+    {
+      "id": 3,
+      "category": "workaround-able",
+      "symptom": "std::invoke_result cannot be computed for __device__-only broadcast_index_functor in thrust transform_iterator (host pass)",
+      "file": "src/core/tensor/tensor_broadcast_ops.cu",
+      "error_snippet": "error: no type named 'type' in 'std::invoke_result<...broadcast_index_functor<>, unsigned long>'",
+      "attempts": [
+        {"action": "mark operator() __host__ __device__ (body is integer arithmetic)", "result": "resolved"}
+      ],
+      "final_verdict": "Fixed.",
+      "resolved": true
+    },
+    {
+      "id": 4,
+      "category": "workaround-able",
+      "symptom": "ambiguous static_cast between __half and integral (long) on ivcore11",
+      "file": "src/core/tensor/tensor_ops.cu",
+      "error_snippet": "error: ambiguous conversion for static_cast from 'long' to '__half'",
+      "attempts": [
+        {"action": "route half<->integral conversions through float in ConvertFunctor (if constexpr)", "result": "resolved"}
+      ],
+      "final_verdict": "Fixed.",
+      "resolved": true
+    },
+    {
+      "id": 5,
+      "category": "workaround-able",
+      "symptom": "cub::DeviceSegmentedReduce::Reduce no matching function (CoreX cub uses a single OffsetIteratorT for begin+end; code passed two distinct transform_iterator lambda types)",
+      "file": "src/core/tensor/tensor_ops.cu",
+      "error_snippet": "error: no matching function for call to 'Reduce'",
+      "attempts": [
+        {"action": "inspect corex cub device_segmented_reduce.cuh signature; use one offset iterator and pass offsets / offsets+1", "result": "resolved"}
+      ],
+      "final_verdict": "Canonical cub segmented-reduce idiom; also valid on NVIDIA. Fixed.",
+      "resolved": true
+    },
+    {
+      "id": 6,
+      "category": "workaround-able",
+      "symptom": "Full application + formal gtest/ctest suite require the full vcpkg dependency graph (imgui/sdl3/vulkan/usd/ffmpeg/openimageio/python/glm/spdlog/tbb/gtest) and the host lfs_core memory-pool/error infrastructure; not buildable on this headless CoreX node in-session.",
+      "file": "CMakeLists.txt / vcpkg.json",
+      "error_snippet": "host link of tensor kernels pulls CudaMemoryPool/GPUSlabAllocator/VramProfiler/Tensor/error infra -> whole lfs_core + vcpkg deps; GUI targets NVIDIA + Vulkan interop, cannot run headless",
+      "attempts": [
+        {"action": "scoped to the LibTorch-free CUDA tensor-kernel library (lfs_tensor_kernels), compiled all 10 TUs with clang++ -x ivcore, and validated the migrated device code via a self-contained on-GPU smoke (links cudart only)", "result": "10/10 kernels compiled; 6/6 on-GPU checks pass"}
+      ],
+      "final_verdict": "Out of scope for this node: full vcpkg app build + GUI/Vulkan headless run. Verified scope is the core CUDA tensor kernels + on-GPU smoke. Documented in session_notes.md.",
+      "resolved": false
+    }
+  ]
+}

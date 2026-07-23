@@ -1,0 +1,7 @@
+# Large / local-only build artifacts. compile.log stays local (can be large).
+build/*.log
+build/obj/
+build/smoke_test
+env/*.log
+!env/ixsmi.log
+# NOTE: corex_port/test/test.log MUST be committed (authoritative test evidence).
