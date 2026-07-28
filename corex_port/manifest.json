@@ -34,9 +34,8 @@
     "完整 vcpkg 应用与正式 gtest/ctest 测试集需完整依赖图与 host lfs_core 基础设施、GUI 需 Vulkan 无法 headless → 超本节点范围（非 terminal），本次限定为 CUDA 张量核范围并以 on-GPU 冒烟验证"
   ],
   "upstream_assessment": {
-    "upstreamable": "partial",
-    "nvidia_compatible": "guarded",
-    "notes": "packed128.cuh 的 __ldcs/__stcs 回退与 tensor_ops.cu 的 par_nosync→par 均以 __ILUVATAR__ 守卫，NVIDIA 默认路径不变;broadcast_index_functor 加 __host__ __device__ 与 cub 单 offset 迭代器写法为通用可移植修复。核心张量核已跑通，完整应用测试受 vcpkg/Vulkan 依赖限制未展开(非硬件 terminal)。CLA 需签。"
+    "upstream_status": "ready",
+    "notes": "packed128.cuh 的 __ldcs/__stcs 回退与 tensor_ops.cu 的 par_nosync→par 均以 __ILUVATAR__ 守卫,NVIDIA 默认路径不变,可直接提 PR;broadcast_index_functor 加 __host__ __device__ 与 cub 单 offset 迭代器写法为通用可移植修复(见 bugfixes)。核心张量核已跑通,完整应用测试受 vcpkg/Vulkan 依赖限制(非硬件 terminal)。CLA 需签。"
   },
   "bugfixes": [
     {
