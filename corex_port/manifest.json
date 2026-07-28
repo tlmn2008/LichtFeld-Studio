@@ -8,7 +8,6 @@
   "migration_finished_at": "2026-07-23T19:30:00Z",
   "sdk_version": "/usr/local/corex (CoreX 4.5.0, ivcore11, clang 22.1.0git)",
   "skill_version": "corex-CUDA-compatible-migration@1.0",
-
   "compile_status": "success",
   "test_status": "all_pass",
   "overall_status": "partial",
@@ -16,7 +15,6 @@
   "tests_passed": 16,
   "tests_failed": 0,
   "tests_skipped": 0,
-
   "summary": "LichtFeld-Studio 是 LibTorch-free 的 3DGS 训练/可视化工作站（C++23 + CUDA + Vulkan GUI，vcpkg 构建）。本次将其自带的 LibTorch-free CUDA 张量核库 lfs_tensor_kernels（10 个 .cu）迁移到 CoreX ivcore11：nvcc 改用 clang++ -x ivcore、arch 改为 ivcore11、翻译编译 flag，并逐个复现并修复 ivcore11 编译墙。10/10 张量核在 ivcore11 编译成功；自包含 on-GPU 冒烟直接调用迁移后的设备代码在 GPU 0（Iluvatar BI-V150，warpSize=64）上运行，6/6 数值校验通过。完整 GUI 应用与仓库自带 gtest/ctest 正式测试集需要完整 vcpkg 依赖图与 host lfs_core 基础设施、且 GUI 依赖 Vulkan interop 无法 headless 运行，属超范围（非 ivcore11 terminal 墙），已在 session_notes 中诚实说明，故整体判为 partial。",
   "key_adaptations": [
     "packed128.cuh：__ldcs/__stcs/__stcg 流式访存内联 PTX（'l' 约束）在 ivcore11 llc 崩溃，__ILUVATAR__ 分支回退为普通 128-bit load/store（语义等价）",
@@ -35,7 +33,19 @@
     "cub DeviceSegmentedReduce offset 迭代器类型差异 → 单一 offset 迭代器，已解决",
     "完整 vcpkg 应用与正式 gtest/ctest 测试集需完整依赖图与 host lfs_core 基础设施、GUI 需 Vulkan 无法 headless → 超本节点范围（非 terminal），本次限定为 CUDA 张量核范围并以 on-GPU 冒烟验证"
   ],
-
+  "upstream_assessment": {
+    "upstreamable": "partial",
+    "nvidia_compatible": "guarded",
+    "notes": "packed128.cuh 的 __ldcs/__stcs 回退与 tensor_ops.cu 的 par_nosync→par 均以 __ILUVATAR__ 守卫，NVIDIA 默认路径不变;broadcast_index_functor 加 __host__ __device__ 与 cub 单 offset 迭代器写法为通用可移植修复。核心张量核已跑通，完整应用测试受 vcpkg/Vulkan 依赖限制未展开(非硬件 terminal)。CLA 需签。"
+  },
+  "bugfixes": [
+    {
+      "file": "src/core/tensor/tensor_ops.cu",
+      "description": "broadcast_index_functor::operator() 原仅 __device__，clang-cuda 在 host 趟用 std::invoke_result 推导 transform_iterator 值类型时失败;改为 __host__ __device__(函数体纯整数运算，host 安全)。属 clang 严格性暴露的可移植性缺陷。",
+      "upstream_worthy": true,
+      "status": "fixed_local"
+    }
+  ],
   "github": {
     "fork_url": "https://github.com/tlmn2008/LichtFeld-Studio",
     "branch": "corex-port",
@@ -46,7 +56,6 @@
     "push_status": "success",
     "pushed_at": "2026-07-23T19:32:00Z"
   },
-
   "local_logs": {
     "compile_log": "/home/repos/LichtFeld-Studio/corex_port/build/compile.log",
     "test_log": "/home/repos/LichtFeld-Studio/corex_port/test/test.log"
