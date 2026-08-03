@@ -25,14 +25,6 @@
     "编译 flag 翻译：-use_fast_math→-ffast-math，去掉 --extended-lambda / --expt-relaxed-constexpr，sm_XX→ivcore11",
     "验证 warpSize=64 下 warp/block 归约数值正确（32/64/256 线程用例）"
   ],
-  "workaround_blockers": [
-    "NV PTX 'l' 约束（__ldcs/__stcs/__stcg）→ 普通 128-bit 访存回退，已解决",
-    "ixthrust 缺 par_nosync → 别名 par，已解决",
-    "__device__-only 仿函数 invoke_result 推导失败 → __host__ __device__，已解决",
-    "__half↔整型 static_cast 二义 → 经 float 中转，已解决",
-    "cub DeviceSegmentedReduce offset 迭代器类型差异 → 单一 offset 迭代器，已解决",
-    "完整 vcpkg 应用与正式 gtest/ctest 测试集需完整依赖图与 host lfs_core 基础设施、GUI 需 Vulkan 无法 headless → 超本节点范围（非 terminal），本次限定为 CUDA 张量核范围并以 on-GPU 冒烟验证"
-  ],
   "upstream_assessment": {
     "upstream_status": "ready",
     "notes": "packed128.cuh 的 __ldcs/__stcs 回退与 tensor_ops.cu 的 par_nosync→par 均以 __ILUVATAR__ 守卫,NVIDIA 默认路径不变,可直接提 PR;broadcast_index_functor 加 __host__ __device__ 与 cub 单 offset 迭代器写法为通用可移植修复(见 bugfixes)。核心张量核已跑通,完整应用测试受 vcpkg/Vulkan 依赖限制(非硬件 terminal)。CLA 需签。"
